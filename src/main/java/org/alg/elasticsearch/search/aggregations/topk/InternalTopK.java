@@ -24,7 +24,9 @@ import com.clearspring.analytics.stream.StreamSummary;
 */
 public class InternalTopK extends InternalAggregation implements TopK {
 
-    public final static Type TYPE = new Type("topk");
+    public final static String TYPENAME = "topk";
+
+//    public final static Type TYPE = new Type("topk");
 
     public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
         @Override
@@ -76,7 +78,6 @@ public class InternalTopK extends InternalAggregation implements TopK {
         });
     }
     
-    @SuppressWarnings("unchecked")
     @Override
     public TopK.Bucket getBucketByKey(String term) {
         if (bucketsMap == null) {
@@ -93,12 +94,6 @@ public class InternalTopK extends InternalAggregation implements TopK {
         return this.buckets;
     }
 
-    @Override
-    public Type type() {
-        return TYPE;
-    }
-    
-    @Override
     public InternalTopK reduce(ReduceContext reduceContext) {
         List<InternalAggregation> aggregations = reduceContext.aggregations();
         InternalTopK reduced = null;
@@ -154,7 +149,6 @@ public class InternalTopK extends InternalAggregation implements TopK {
         return reduced;
     }
 
-    @Override
     public void readFrom(StreamInput in) throws IOException {
         name = in.readString();
         size = in.readInt();
@@ -180,7 +174,6 @@ public class InternalTopK extends InternalAggregation implements TopK {
         // buckets are alreaduy sorted here
     }
 
-    @Override
     public void writeTo(StreamOutput out) throws IOException {
         out.writeString(this.name);
         out.writeInt(this.size.intValue());

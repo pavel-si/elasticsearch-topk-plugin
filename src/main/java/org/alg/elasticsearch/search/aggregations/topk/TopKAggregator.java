@@ -187,11 +187,11 @@ public class TopKAggregator extends SingleBucketAggregator {
         }
     }
 
-    public static class Factory extends ValuesSourceAggregatorFactory<ValuesSource.Bytes> {
+    /*public static class Builder extends ValuesSourceAggregatorFactory<ValuesSource.Bytes> {
         private final Number size;
         private final Number capacity;
         
-        public Factory(String name, ValuesSourceConfig<ValuesSource.Bytes> valueSourceConfig, Number size, Number capacity) {
+        public Builder(String name, ValuesSourceConfig<ValuesSource.Bytes> valueSourceConfig, Number size, Number capacity) {
             super(name, InternalTopK.TYPE.name(), valueSourceConfig);
             this.size = size;
             this.capacity = capacity;
@@ -206,5 +206,5 @@ public class TopKAggregator extends SingleBucketAggregator {
         protected Aggregator createUnmapped(AggregationContext aggregationContext, Aggregator parent) {
             return new TopKAggregator(name, size, capacity, factories, 0, null, aggregationContext, parent);
         }
-    }
+    }*/
 }
