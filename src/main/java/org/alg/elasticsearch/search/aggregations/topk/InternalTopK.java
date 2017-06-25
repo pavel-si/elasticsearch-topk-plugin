@@ -12,7 +12,6 @@ import org.alg.elasticsearch.search.aggregations.topk.TopKAggregator.Term;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.search.aggregations.AggregationStreams;
 import org.elasticsearch.search.aggregations.InternalAggregation;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 
@@ -26,30 +25,13 @@ public class InternalTopK extends InternalAggregation implements TopK {
 
     public final static String TYPENAME = "topk";
 
-//    public final static Type TYPE = new Type("topk");
-
-    public final static AggregationStreams.Stream STREAM = new AggregationStreams.Stream() {
-        @Override
-        public InternalTopK readResult(StreamInput in) throws IOException {
-            InternalTopK result = new InternalTopK();
-            result.readFrom(in);
-            return result;
-        }
-    };
-
-    public static void registerStreams() {
-        AggregationStreams.registerStream(STREAM, TYPE.stream());
-    }
-
     private StreamSummary<Term> summary;
     private Number size;
     private List<TopK.Bucket> buckets;
     private HashMap<String, TopK.Bucket> bucketsMap;
 
-    InternalTopK() { }  // for serialization
-
     InternalTopK(String name, Number size, StreamSummary<Term> summary) {
-        super(name);
+        super(in); // TODO where do I get the Stream from?
         this.size = size;
         this.summary = summary;
         this.buckets = new ArrayList<>();
@@ -90,8 +72,8 @@ public class InternalTopK extends InternalAggregation implements TopK {
     }
     
     @Override
-    public Collection<TopK.Bucket> getBuckets() {
-        return this.buckets;
+    public List<? extends Bucket> getBuckets() {
+        return buckets;
     }
 
     public InternalTopK reduce(ReduceContext reduceContext) {
@@ -174,7 +156,8 @@ public class InternalTopK extends InternalAggregation implements TopK {
         // buckets are alreaduy sorted here
     }
 
-    public void writeTo(StreamOutput out) throws IOException {
+    @Override
+    protected void doWriteTo(StreamOutput out) throws IOException {
         out.writeString(this.name);
         out.writeInt(this.size.intValue());
         out.writeBoolean(this.summary != null);
@@ -191,6 +174,16 @@ public class InternalTopK extends InternalAggregation implements TopK {
     }
 
     @Override
+    public InternalAggregation doReduce(List<InternalAggregation> aggregations, ReduceContext reduceContext) {
+        return null;
+    }
+
+    @Override
+    public Object getProperty(List<String> path) {
+        return null;
+    }
+
+    @Override
     public XContentBuilder doXContentBody(XContentBuilder builder, Params params) throws IOException {
         builder.startArray(CommonFields.BUCKETS);
         for (TopK.Bucket bucket : getBuckets()) {
@@ -200,4 +193,8 @@ public class InternalTopK extends InternalAggregation implements TopK {
         return builder;
     }
 
+    @Override
+    public String getWriteableName() {
+        return null;
+    }
 }

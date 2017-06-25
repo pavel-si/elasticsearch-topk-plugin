@@ -21,7 +21,8 @@ public class TopKParser implements Aggregator.Parser {
 
     @Override
     public AggregationBuilder parse(String aggregationName, QueryParseContext context) throws IOException {
-        ValuesSourceConfig<ValuesSource.Bytes> config = new ValuesSourceConfig<>(ValuesSource.Bytes.class);
+        // TODO config
+        /*ValuesSourceConfig<ValuesSource.Bytes> config = new ValuesSourceConfig<>(ValuesSource.Bytes.class);*/
         
         String field = null;
         Number size = null;
@@ -62,12 +63,14 @@ public class TopKParser implements Aggregator.Parser {
             throw new ParsingException(parser.getTokenLocation(), "Key 'size' cannot be null.", null);
         }
 
-        FieldMapper<?> mapper = context.smartNameFieldMapper(field);
+        /*FieldMapper<?> mapper = context.parser().smartNameFieldMapper(field);
         if (mapper == null) {
             config.unmapped(true);
-            return new TopKBuilder().field(aggregationName).size(size).capacity(capacity); // TODO config
+            return new TopKBuilder().field(aggregationName).size(size).capacity(capacity);
         }
         config.fieldContext(new FieldContext(field, context.fieldData().getForField(mapper), mapper));
-        return new TopKBuilder().field(aggregationName).size(size).capacity(capacity); // TODO config??
+        */
+        // TODO where is the in stream?
+        return new TopKBuilder(in).field(aggregationName).size(size).capacity(capacity); // TODO should we pass config in??
     }
 }

@@ -1,26 +1,28 @@
 package org.alg.elasticsearch.search.aggregations.topk;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-
-import org.apache.lucene.index.AtomicReaderContext;
+import com.clearspring.analytics.stream.StreamSummary;
+import com.clearspring.analytics.util.Pair;
+import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.common.lease.Releasables;
+import org.elasticsearch.common.settings.SecureSettings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.ObjectArray;
 import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
 import org.elasticsearch.search.aggregations.Aggregator;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
 import org.elasticsearch.search.aggregations.InternalAggregation;
+import org.elasticsearch.search.aggregations.LeafBucketCollector;
 import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregator;
-import org.elasticsearch.search.aggregations.support.AggregationContext;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
-import org.elasticsearch.search.aggregations.support.ValuesSourceAggregatorFactory;
-import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
+import org.elasticsearch.search.internal.SearchContext;
 
-import com.clearspring.analytics.stream.StreamSummary;
-import com.clearspring.analytics.util.Pair;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  *
@@ -71,34 +73,26 @@ public class TopKAggregator extends SingleBucketAggregator {
     // without any major accuracy issue
     private final Number capacity;
 
+    private BigArrays bigArrays;
     private ObjectArray<Stack<Integer>> bucketOrds;
     private ObjectArray<StreamSummary<Term>> summaries;
     private ObjectArray<Map<String, Integer>> termToBucket;
 
-    public TopKAggregator(String name, Number size, Number capacity, AggregatorFactories factories, long estimatedBucketsCount, ValuesSource.Bytes valuesSource, AggregationContext aggregationContext, Aggregator parent) {
-        super(name, factories, aggregationContext, parent);
+    public TopKAggregator(String name, Number size, Number capacity, AggregatorFactories factories, long estimatedBucketsCount, ValuesSource.Bytes
+            valuesSource, SearchContext aggregationContext, Aggregator parent) throws IOException {
+        super(name, factories, aggregationContext, parent, null, null);
         this.size = size;
         this.capacity = capacity;
         this.valuesSource = valuesSource;
         if (valuesSource != null) {
             final long initialSize = estimatedBucketsCount < 2 ? 1 : estimatedBucketsCount;
+            this.bigArrays = new BigArrays(new Settings(Collections.emptyMap(), null), null); // TODO settings etc
             this.summaries = bigArrays.newObjectArray(initialSize);
             this.bucketOrds = bigArrays.newObjectArray(initialSize);
             this.termToBucket = bigArrays.newObjectArray(initialSize);
         }
     }
-    
-    @Override
-    public boolean shouldCollect() {
-        return this.valuesSource != null;
-    }
 
-    @Override
-    public void setNextReader(AtomicReaderContext reader) {
-        this.values = valuesSource.bytesValues();
-    }
-
-    @Override
     public void collect(int doc, long owningBucketOrdinal) throws IOException {
         assert this.valuesSource != null : "should collect first";
         
@@ -155,12 +149,12 @@ public class TopKAggregator extends SingleBucketAggregator {
             
             // collect sub aggregations
             assert t.bucketOrd != -1;
-            collectBucket(doc, t.bucketOrd);
+            collectBucket(subCollector, doc, t.bucketOrd); // TODO where is the subCollector
         }
     }
 
     @Override
-    public InternalAggregation buildAggregation(long owningBucketOrdinal) {
+    public InternalAggregation buildAggregation(long owningBucketOrdinal) throws IOException {
         StreamSummary<Term> summary = summaries == null || owningBucketOrdinal >= summaries.size() ? null : summaries.get(owningBucketOrdinal);
         InternalTopK topk = new InternalTopK(name, size, summary);
         for (TopK.Bucket bucket : topk.getBuckets()) {
@@ -172,6 +166,11 @@ public class TopKAggregator extends SingleBucketAggregator {
     @Override
     public InternalAggregation buildEmptyAggregation() {
         return new InternalTopK(name, size, null);
+    }
+
+    @Override
+    protected LeafBucketCollector getLeafCollector(LeafReaderContext ctx, LeafBucketCollector sub) throws IOException {
+        return null;
     }
 
     @Override
