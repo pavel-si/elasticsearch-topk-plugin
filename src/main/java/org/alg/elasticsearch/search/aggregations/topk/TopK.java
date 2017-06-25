@@ -1,24 +1,21 @@
 package org.alg.elasticsearch.search.aggregations.topk;
 
-import java.io.IOException;
-import java.util.Collection;
-
-import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.text.BytesText;
-import org.elasticsearch.common.text.Text;
-import org.elasticsearch.common.xcontent.ToXContent.Params;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.InternalAggregation.CommonFields;
 import org.elasticsearch.search.aggregations.InternalAggregations;
 import org.elasticsearch.search.aggregations.bucket.MultiBucketsAggregation;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
  */
 public interface TopK extends MultiBucketsAggregation {
+
     static class Bucket implements MultiBucketsAggregation.Bucket {
         private final String term;
         private final long count;
@@ -38,8 +35,8 @@ public interface TopK extends MultiBucketsAggregation {
         }
 
         @Override
-        public Text getKeyAsText() {
-            return new BytesText(new BytesArray(term));
+        public String getKeyAsString() {
+            return term;
         }
 
         @Override
@@ -51,16 +48,18 @@ public interface TopK extends MultiBucketsAggregation {
         public Aggregations getAggregations() {
             return aggregations;
         }
-        
-        void toXContent(XContentBuilder builder, Params params) throws IOException {
+
+        @Override
+        public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
             builder.startObject();
-            builder.field(CommonFields.KEY, term);
-            builder.field(CommonFields.DOC_COUNT, count);
+//            builder.field(CommonFields.KEY, term);
+//            builder.field(CommonFields.DOC_COUNT, count);
             aggregations.toXContentInternal(builder, params);
             builder.endObject();
+            return builder;
         }
         
-        void writeTo(StreamOutput out) throws IOException {
+        public void writeTo(StreamOutput out) throws IOException {
             out.writeString(term);
             out.writeLong(count);
             out.writeInt(bucketOrd);
@@ -79,9 +78,18 @@ public interface TopK extends MultiBucketsAggregation {
             return new TopK.Bucket(term, count, bucketOrd, InternalAggregations.readOptionalAggregations(in));
         }
     }
-    
-    Collection<Bucket> getBuckets();
 
-    @SuppressWarnings("unchecked")
+    List<? extends MultiBucketsAggregation.Bucket> getBuckets();
+
     Bucket getBucketByKey(String term);
+
+    @Override
+    default String getName() {
+        return null;
+    }
+
+    @Override
+    default Map<String, Object> getMetaData() {
+        return null;
+    }
 }
