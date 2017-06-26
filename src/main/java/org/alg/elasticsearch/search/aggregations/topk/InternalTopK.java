@@ -23,8 +23,6 @@ import com.clearspring.analytics.stream.StreamSummary;
 */
 public class InternalTopK extends InternalAggregation implements TopK {
 
-    public final static String TYPENAME = "topk";
-
     private StreamSummary<Term> summary;
     private Number size;
     private List<TopK.Bucket> buckets;

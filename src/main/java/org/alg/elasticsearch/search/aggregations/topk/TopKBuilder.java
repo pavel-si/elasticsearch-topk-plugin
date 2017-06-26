@@ -1,21 +1,23 @@
 package org.alg.elasticsearch.search.aggregations.topk;
 
-import java.io.IOException;
-import java.util.Map;
-
 import org.elasticsearch.common.io.stream.StreamInput;
 import org.elasticsearch.common.io.stream.StreamOutput;
-import org.elasticsearch.common.io.stream.Writeable;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregatorFactories;
 import org.elasticsearch.search.aggregations.AggregatorFactory;
 import org.elasticsearch.search.aggregations.PipelineAggregationBuilder;
+import org.elasticsearch.search.aggregations.support.ValuesSource;
 import org.elasticsearch.search.internal.SearchContext;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class TopKBuilder extends AggregationBuilder {
-    
+
+    public static String ARTIFACT_ID = "topk-aggregation";
+    public static String NAME = "topk";
+
     private String field;
     private Number size;
     private Number capacity;
@@ -23,20 +25,6 @@ public class TopKBuilder extends AggregationBuilder {
     @Override
     protected AggregatorFactory<?> build(SearchContext context, AggregatorFactory<?> parent) throws IOException {
         return null;
-    }
-
-    protected XContentBuilder internalXContent(XContentBuilder builder, Params params) throws IOException {
-        builder.startObject();
-        if (field != null) {
-            builder.field("field", field);
-        }
-        if (size != null) {
-            builder.field("size", size);
-        }
-        if (capacity != null) {
-            builder.field("capacity", capacity);
-        }
-        return builder.endObject();
     }
 
     @Override
@@ -64,6 +52,20 @@ public class TopKBuilder extends AggregationBuilder {
         return null;
     }
 
+    protected XContentBuilder internalXContent(XContentBuilder builder, Params params) throws IOException {
+        builder.startObject();
+        if (field != null) {
+            builder.field("field", field);
+        }
+        if (size != null) {
+            builder.field("size", size);
+        }
+        if (capacity != null) {
+            builder.field("capacity", capacity);
+        }
+        return builder.endObject();
+    }
+
     public TopKBuilder field(String field) {
         this.field = field;
         return this;
@@ -80,14 +82,12 @@ public class TopKBuilder extends AggregationBuilder {
     }
 
     public TopKBuilder(StreamInput in) throws IOException {
-        super(InternalTopK.TYPENAME);
-//        this.someValue = in.readVInt();
-//        this.someMap = in.readMapOfLists(StreamInput::readString, StreamInput::readString);
+        super(TopKBuilder.NAME);
     }
 
     @Override
     public String getWriteableName() {
-        return InternalTopK.TYPENAME;
+        return TopKBuilder.NAME;
     }
 
     @Override

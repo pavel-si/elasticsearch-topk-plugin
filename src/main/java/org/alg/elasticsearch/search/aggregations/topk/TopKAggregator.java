@@ -4,25 +4,21 @@ import com.clearspring.analytics.stream.StreamSummary;
 import com.clearspring.analytics.util.Pair;
 import org.apache.lucene.index.LeafReaderContext;
 import org.elasticsearch.common.lease.Releasables;
-import org.elasticsearch.common.settings.SecureSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.util.BigArrays;
 import org.elasticsearch.common.util.ObjectArray;
 import org.elasticsearch.index.fielddata.SortedBinaryDocValues;
-import org.elasticsearch.search.aggregations.Aggregator;
-import org.elasticsearch.search.aggregations.AggregatorFactories;
-import org.elasticsearch.search.aggregations.InternalAggregation;
-import org.elasticsearch.search.aggregations.LeafBucketCollector;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.aggregations.bucket.SingleBucketAggregator;
+import org.elasticsearch.search.aggregations.pipeline.PipelineAggregator;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
+import org.elasticsearch.search.aggregations.support.ValuesSourceAggregatorFactory;
+import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 import org.elasticsearch.search.internal.SearchContext;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 /**
  *
@@ -186,24 +182,25 @@ public class TopKAggregator extends SingleBucketAggregator {
         }
     }
 
-    /*public static class Builder extends ValuesSourceAggregatorFactory<ValuesSource.Bytes> {
+    public static class Factory extends ValuesSourceAggregatorFactory<ValuesSource.Bytes, Factory> {
         private final Number size;
         private final Number capacity;
-        
-        public Builder(String name, ValuesSourceConfig<ValuesSource.Bytes> valueSourceConfig, Number size, Number capacity) {
-            super(name, InternalTopK.TYPE.name(), valueSourceConfig);
+
+        public Factory(String name, ValuesSourceConfig<ValuesSource.Bytes> config, SearchContext context, AggregatorFactory<?> parent, AggregatorFactories.Builder subFactoriesBuilder, Map<String, Object> metaData, Number size, Number capacity) throws IOException {
+            super(name, config, context, parent, subFactoriesBuilder, metaData);
             this.size = size;
             this.capacity = capacity;
         }
 
         @Override
-        public Aggregator create(ValuesSource.Bytes valuesSource, long expectedBucketsCount, AggregationContext aggregationContext, Aggregator parent) {
-            return new TopKAggregator(name, size, capacity, factories, expectedBucketsCount, valuesSource, aggregationContext, parent);
+        protected Aggregator createUnmapped(Aggregator parent, List list, Map metaData) throws IOException {
+            return new TopKAggregator(name, size, capacity, factories, 0, null, parent.context(), parent);
         }
 
         @Override
-        protected Aggregator createUnmapped(AggregationContext aggregationContext, Aggregator parent) {
-            return new TopKAggregator(name, size, capacity, factories, 0, null, aggregationContext, parent);
+        protected Aggregator doCreateInternal(ValuesSource.Bytes valuesSource, Aggregator parent, boolean collectsFromSingleBucket, List<PipelineAggregator> pipelineAggregators, Map<String, Object> metaData) throws IOException {
+            return new TopKAggregator(name, size, capacity, factories, 10, valuesSource, parent.context(), parent);
+            // TODO collectsFromSingleBucket set to ten, is there a better default?
         }
-    }*/
+    }
 }

@@ -14,9 +14,6 @@ import org.elasticsearch.search.aggregations.support.FieldContext;
 import org.elasticsearch.search.aggregations.support.ValuesSource;
 import org.elasticsearch.search.aggregations.support.ValuesSourceConfig;
 
-/**
- *
- */
 public class TopKParser implements Aggregator.Parser {
 
     @Override
@@ -39,7 +36,6 @@ public class TopKParser implements Aggregator.Parser {
                 if ("field".equals(currentFieldName)) {
                     field = parser.text();
                 } else {
-
                     throw new ParsingException(location,  "Unknown key for a " + token + " in [" + aggregationName + "]: [" + currentFieldName +
                             "].");
                 }
